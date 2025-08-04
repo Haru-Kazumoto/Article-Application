@@ -9,7 +9,7 @@ a nest of articles from the latest technology information news that is currently
 - List of articles
 - Read article
 - Filtering by title and slugs
-- Back office management (not enough time, access at /office path)
+- Back office management (due to not enough time, I only got the Create and Get method)
 
 
 ## Deployment
@@ -33,7 +33,10 @@ Run the seeder and factory
 ```bash
   php artisan db:seed
 ```
-
+Open the storage link
+```bash
+  php artisan storage:link
+```
 Run the project (use seperate terminal for dual server) :
 ```bash
   php artisan serve
@@ -41,6 +44,3 @@ Run the project (use seperate terminal for dual server) :
 ```bash
   npm run dev
 ```
-## Feedback
-
-The projects is not full enough yet due to not enough time
