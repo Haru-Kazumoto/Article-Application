@@ -1,98 +1,82 @@
-<script setup lang="ts">
-import Checkbox from '@/Components/Checkbox.vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-
-defineProps<{
-    canResetPassword?: boolean;
-    status?: string;
-}>();
-
-const form = useForm({
-    email: '',
-    password: '',
-    remember: false,
-});
-
-const submit = () => {
-    form.post(route('login'), {
-        onFinish: () => {
-            form.reset('password');
-        },
-    });
-};
-</script>
-
 <template>
     <GuestLayout>
-        <Head title="Log in" />
+        <div
+            class="w-full max-w-sm bg-white  rounded-lg shadow p-6 sm:p-8 border border-gray-200 ">
+            <n-form ref="formRef" :model="formModel" :rules="rules" class="space-y-4">
+                <h5 class="text-xl font-medium text-gray-900 ">Sign in to our platform</h5>
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
-            {{ status }}
+                <n-form-item label="Email" path="email">
+                    <n-input v-model:value="formModel.email" placeholder="name@company.com" type="text" />
+                </n-form-item>
+
+                <n-form-item label="Password" path="password">
+                    <n-input v-model:value="formModel.password" type="password" show-password-on="click"
+                        placeholder="••••••••" />
+                </n-form-item>
+
+
+                <n-button color="#111827" class="w-full" @click="handleSubmit">
+                    Login to your account
+                </n-button>
+
+                <div class="text-sm text-gray-600  text-center">
+                    Not registered?
+                    <a href="#" class="text-blue-700 hover:underline ">Create account</a>
+                </div>
+            </n-form>
         </div>
-
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="current-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4 block">
-                <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600 dark:text-gray-400"
-                        >Remember me</span
-                    >
-                </label>
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
-                >
-                    Forgot your password?
-                </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Log in
-                </PrimaryButton>
-            </div>
-        </form>
     </GuestLayout>
 </template>
+
+<script lang="ts">
+import { ref, defineComponent } from 'vue'
+import { FormInst, FormRules, useMessage } from 'naive-ui'
+import { NForm, NFormItem, NButton, NInput } from 'naive-ui';
+import GuestLayout from '@/Layouts/GuestLayout.vue';
+import { router } from '@inertiajs/vue3';
+
+export default defineComponent({
+    components: {
+        NForm, NFormItem, NButton, NInput, GuestLayout
+    },
+    setup() {
+        const formRef = ref<FormInst | null>(null);
+        const formModel = ref({
+            email: '',
+            password: '',
+            remember: false
+        })
+
+        const rules: FormRules = {
+            email: [
+                { required: true, message: 'Email is required', trigger: ['blur', 'input'] },
+                { type: 'email', message: 'Email format is invalid', trigger: ['blur', 'input'] }
+            ],
+            password: [
+                { required: true, message: 'Password is required', trigger: ['blur', 'input'] }
+            ]
+        }
+
+        function handleSubmit(e: MouseEvent) {
+            e.preventDefault()
+            formRef.value?.validate((errors) => {
+                if (errors) {
+                    return;
+                } 
+
+                router.post(route('login'), {
+                    email: formModel.value.email,
+                    password: formModel.value.password
+                });
+            })
+        }
+
+        return {
+            formRef,
+            formModel,
+            rules,
+            handleSubmit
+        }
+    }
+});
+</script>

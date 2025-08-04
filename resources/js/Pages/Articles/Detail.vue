@@ -24,7 +24,7 @@
                 <BackButton to="dashboard" />
 
                 <!-- Thumbnail Artikel -->
-                <img src="https://i.ytimg.com/vi/LdNsr_oQ100/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLCqNNdjPiJ0qLCrr_ooLQYTZc_Qyg"
+                <img :src="article.thumbnail"
                     alt="Thumbnail" class="w-full rounded-lg shadow-sm object-cover" />
 
                 <!-- Isi Konten Artikel -->

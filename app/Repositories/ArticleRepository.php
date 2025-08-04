@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Repositories\Interfaces\ArticleRepositoryInterface;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
@@ -43,11 +44,11 @@ class ArticleRepository implements ArticleRepositoryInterface
             });
         }
 
-        $articles = $query->latest('art.published_at')->paginate(20);
+        $articles = $query->latest('art.created_at')->paginate(20);
 
         // konpersi thumbnail menjadi asset URL
         $articles->getCollection()->transform(function ($data) {
-            $data->thumbnail = $data->thumbnail ? asset($data->thumbnail) : null;
+            $data->thumbnail = $data->thumbnail ? asset('storage/' . $data->thumbnail) : null;
             $data->published_at = \Carbon\Carbon::parse($data->published_at)->diffForHumans();
             return $data;
         });
@@ -58,7 +59,7 @@ class ArticleRepository implements ArticleRepositoryInterface
 
     public function getDetailArticle(string $slug)
     {
-        return DB::table('articles as art')
+        $article = DB::table('articles as art')
             ->join('users as u', 'u.id', '=', 'art.created_by')
             ->select([
                 'art.id as article_id',
@@ -72,8 +73,17 @@ class ArticleRepository implements ArticleRepositoryInterface
                 'u.join_at',
             ])
             ->where('art.slug', $slug)
-            ->first(); 
+            ->first();
+
+        if ($article) {
+            $article->thumbnail = $article->thumbnail 
+                ? asset('storage/' . $article->thumbnail) 
+                : null;
+        }
+
+        return $article;
     }
+
 
     public function getArticleTags(string $slug)
     {
@@ -87,6 +97,37 @@ class ArticleRepository implements ArticleRepositoryInterface
 
     public function saveArticle(array $data)
     {
-        return DB::table('articles')->insert($data);
+        return DB::table('articles')->insertGetId($data); // penting: insertGetId
+    }
+
+
+    public function getArticlesByUser(int $user_id)
+    {
+        $query = DB::table('articles as art')
+            ->join('article_tags as at', 'at.article_id', '=', 'art.id')
+            ->leftJoin('tags as t', 't.id', '=', 'at.tag_id')
+            ->leftJoin('users as u','u.id','=','art.created_by')
+            ->select(
+                'art.id as article_id',
+                'art.title',
+                'art.slug',
+                'art.summary',
+                'art.thumbnail',
+                'art.published_at',
+                't.name as tag_name',
+                'u.fullname as publisher_name'
+            )
+            ->where('art.created_by',$user_id);
+
+        $articles = $query->latest('art.published_at')->paginate(20);
+
+        // konpersi thumbnail menjadi asset URL
+        $articles->getCollection()->transform(function ($data) {
+            $data->thumbnail = $data->thumbnail ? asset($data->thumbnail) : null;
+            $data->published_at = \Carbon\Carbon::parse($data->published_at)->diffForHumans();
+            return $data;
+        });
+
+        return $articles;
     }
 }

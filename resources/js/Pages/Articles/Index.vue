@@ -1,125 +1,99 @@
 <template>
     <BaseLayout>
-        <div class="space-y-6 px-6 py-4">
-            <!-- Header -->
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold">Manage Articles</h1>
-                <n-button type="primary" @click="router.visit(route('office.create'))">
-                    <template #icon>
-                        <n-icon>
-                            <PlusIcon />
-                        </n-icon>
-                    </template>
-                    New Article
-                </n-button>
-            </div>
+        <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-14 space-y-6">
+            <BackButton to="dashboard" />
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+                <!-- Creator Profile -->
+                <div class="lg:col-span-2">
+                    <div class="sticky top-20">
+                        <div
+                            class="bg-white rounded-xl shadow hover:shadow-md transition-shadow duration-300 overflow-hidden p-4 flex gap-4 items-start">
+                            <n-avatar size="large" round :src="creator.avatar || defaultAvatar" class="flex-shrink-0" />
+                            <div class="flex flex-col">
+                                <span class="text-lg font-semibold">
+                                    {{ creator.fullname }}
+                                </span>
+                                <span class="text-sm text-gray-500">
+                                    Creator
+                                </span>
+                                <p class="text-sm text-gray-600 mt-2 line-clamp-3">
+                                    Join At {{ creator.join_at }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Article Table -->
-            <n-data-table :columns="columns" :data="articles" :pagination="{ pageSize: 5 }" :bordered="true" />
+                <!-- Artikel -->
+                <div class="lg:col-span-3 flex flex-col gap-3">
+                    <template v-if="articles.data.length > 1">
+                        <ArticleCard v-for="article in articles.data" :key="article.slug" :article="article"
+                            @read="handleReadArticle(article.slug)" />
+                        <div class="w-full overflow-x-auto">
+                            <div class="flex justify-center sm:justify-end min-w-[300px]">
+                                <n-pagination v-model:page="articles.current_page" :page-count="articles.last_page"
+                                    :page-size="articles.per_page" @update:page="handlePageChange"
+                                    @update:page-count="articles.last_page = articles.last_page" />
+                            </div>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div class="flex flex-col items-center justify-center h-96 text-gray-500">
+                            <img src="/images/empty_image.png" alt="Tidak ada artikel"
+                                class="w-48 h-48 object-contain mb-4" />
+                            <p>Tidak ada artikel yang tersedia.</p>
+                        </div>
+                    </template>
+                </div>
+
+
+
+            </div>
         </div>
     </BaseLayout>
-
 </template>
 
 <script lang="ts">
-import { defineComponent, h } from 'vue'
+import { defineComponent } from 'vue'
 import BaseLayout from '@/Layouts/BaseLayout.vue'
-import { NButton, NIcon, NDataTable } from 'naive-ui'
+import { NCard, NAvatar, NPagination } from 'naive-ui'
+import ArticleCard from '@/Components/ArticleCard.vue'
+import BackButton from '@/Components/BackButton.vue'
 import { router } from '@inertiajs/vue3'
 
 export default defineComponent({
     components: {
-        BaseLayout,
-        NButton,
-        NIcon,
-        NDataTable,
+        NCard, NAvatar, BaseLayout, ArticleCard, BackButton, NPagination
     },
-    setup() {
-        function createColumns() {
-            return [
-                {
-                    title: 'Title',
-                    key: 'title',
-                    width: 150,
-                },
-                {
-                    title: 'Category',
-                    key: 'category',
-                    width: 150,
-                },
-                {
-                    title: 'Author',
-                    key: 'author',
-                    width: 150,
-                },
-                {
-                    title: 'Actions',
-                    key: 'actions',
-                    width: 150,
-                    render: (row: any) =>
-                        h(
-                            'div',
-                            { class: 'space-x-2' },
-                            [
-                                h(
-                                    NButton,
-                                    {
-                                        type: 'primary',
-                                        size: 'small',
-                                        onClick: () => handleEdit(row.id),
-                                    },
-                                    {
-                                        icon: () =>
-                                            h(NIcon, null, { default: () => h(null) }),
-                                    }
-                                ),
-                                h(
-                                    NButton,
-                                    {
-                                        type: 'error',
-                                        size: 'small',
-                                        onClick: () => handleDelete(row.id),
-                                    },
-                                    {
-                                        icon: () =>
-                                            h(NIcon, null, { default: () => h(null) }),
-                                    }
-                                ),
-                            ]
-                        ),
-                },
-            ]
+    props: {
+        articles: { type: Object, required: true },
+        creator: { type: Object, required: true }
+    },
+    setup(props) {
+        console.log(props);
+
+        const defaultAvatar =
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCQSEQ8FsJIDaJGl6qOaoRkK7iXQNmo6dLKg&s'
+
+
+        function handleReadArticle(slug: string) {
+            router.get(route('read', slug));
         }
 
-        function handleCreate() {
-            router.visit('/articles/create')
-        }
-
-        function handleEdit(id: number) {
-            router.visit(`/articles/${id}/edit`)
-        }
-
-        function handleDelete(id: number) {
-            if (confirm('Are you sure you want to delete this article?')) {
-                router.delete(`/articles/${id}`)
-            }
+        function handlePageChange(page: number) {
+            router.get(route('article.index', props.creator.id), {
+                page
+            }, {
+                preserveState: true,
+                replace: true
+            });
         }
 
         return {
-            articles: [
-                { id: 1, title: 'First Article', category: 'Tech', author: 'Admin' },
-                { id: 2, title: 'Second Article', category: 'Finance', author: 'Editor' },
-            ],
-            columns: createColumns(),
-            router
+            handlePageChange,
+            defaultAvatar,
+            handleReadArticle
         }
-    },
-    methods: {
-
-    },
-})
+    }
+});
 </script>
-
-<style scoped>
-/* Optional styling */
-</style>

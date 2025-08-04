@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\ArticleService;
+use App\Services\RecentArticleService;
 use App\Services\TagsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,6 +30,7 @@ class DashboardController extends Controller
         return Inertia::render("Dashboard", [
             'articles' => $articles,
             'tags' => $tags,
+            'recents' => app(RecentArticleService::class)->getRecents(),
             'filters' => [
                 'title' => $title,
                 'slugs' => $slugs,

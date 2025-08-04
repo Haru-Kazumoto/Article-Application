@@ -10,28 +10,21 @@
 
                 <!-- Kanan: Avatar -->
                 <div class="flex items-center space-x-3 cursor-pointer text-white">
-                    <n-button quarternary type="info" @click="router.visit(route('office'))">
-                        <template #icon>
-                            <n-icon size="20">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                </svg>
-                            </n-icon>
-                        </template>
-                        Create Article
-                    </n-button>
+                    <n-dropdown trigger="click" :options="dropdownOptions" @select="handleSelect">
+                        <div class="flex items-center space-x-2">
+                            <n-avatar round size="medium"
+                                src="https://www.pngmart.com/files/21/Admin-Profile-PNG-Isolated-Pic.png" />
+                            <div class="hidden sm:block text-sm leading-tight text-white">
+                                <p class="font-semibold">{{ page.props.auth.user ? (page.props.auth.user as
+                                    any).fullname : 'Guest User' }}
+                                </p>
+                                <p class="text-xs opacity-75">{{ page.props.auth.user ? page.props.auth.user.email : '-'
+                                    }}</p>
+                            </div>
+                        </div>
+                    </n-dropdown>
 
-                    <!-- <n-avatar round size="medium"
-                        src="https://www.pngmart.com/files/21/Admin-Profile-PNG-Isolated-Pic.png" />
-                    <div class="hidden sm:block text-sm leading-tight">
-                        <p class="font-semibold">Guest User</p>
-                        <p class="text-xs opacity-75">johndoe@example.com</p>
-                    </div> -->
                 </div>
-                <!-- <n-dropdown :options="dropdownOptions" @select="handleSelect">
-                </n-dropdown> -->
             </div>
         </header>
 
@@ -67,35 +60,64 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { NAvatar, NInput, NDropdown, NButton } from 'naive-ui'
-import { router } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
+import { computed } from 'vue';
 
 export default defineComponent({
     components: {
         NAvatar,
         NDropdown,
-        NInput, 
+        NInput,
         NButton
     },
     setup() {
-        const dropdownOptions = [
-            { label: 'Profile', key: 'profile' },
-            { label: 'Settings', key: 'settings' },
-            { label: 'Logout', key: 'logout' },
-        ]
+        const page = usePage();
+        const dropdownOptions = computed(() => {
+            return page.props.auth?.user
+                ? [
+                    { label: 'Create article', key: 'create' },
+                    { label: 'My article', key: 'index' },
+                    { label: 'Logout', key: 'logout' },
+                ]
+                : [
+                    { label: 'Login', key: 'login' },
+                    { label: 'Register', key: 'register' },
+                ]
+        })
 
-        // function handleSelect(key: string) {
-        //     if (key === 'logout') {
-        //         // logika logout
-        //         console.log('Logging out...')
-        //     } else {
-        //         console.log('Selected:', key)
-        //     }
-        // }
+        function handleSelect(key: string) {
+            switch (key) {
+                case 'login':
+                    router.visit(route('login'));
+                    break;
+
+                case 'register':
+                    router.visit(route('register'));
+                    break;
+
+                case 'create':
+                    router.visit(route('article.create')); 
+                    break;
+
+                case 'index':
+                    router.visit(route('article.index', page.props.auth.user.id)); 
+                    break;
+
+                case 'logout':
+                    router.post(route('logout'));
+                    break;
+
+                default:
+                    console.warn(`Unknown dropdown key: ${key}`);
+            }
+        }
+
 
         return {
             dropdownOptions,
-            router
-            // handleSelect
+            router,
+            handleSelect,
+            page
         }
     }
 })
